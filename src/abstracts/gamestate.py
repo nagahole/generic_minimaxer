@@ -6,6 +6,10 @@ TMove = TypeVar("TMove")
 class GameState(ABC):
 
     @abstractmethod
+    def make_move(self, move: TMove) -> None:
+        ...
+
+    @abstractmethod
     def get_next_states(self) -> Iterable[tuple[TMove, Self]]:
         ...
 

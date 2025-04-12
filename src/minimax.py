@@ -3,7 +3,7 @@ import threading
 
 from typing import TypeVar, Callable, Optional
 
-from .abstracts.evaluator import Evaluator
+from .abstracts import Evaluator
 from .abstracts.gamestate import GameState, TMove
 
 
@@ -79,7 +79,7 @@ def dfs_factory(state: T, evaluator: Evaluator[T],
         if kill_flag.is_set():
             return None
 
-        cur_score = evaluator(cur)
+        cur_score = evaluator.evaluate(cur)
 
         if (
             depth == max_depth or
