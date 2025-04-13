@@ -1,2 +1,2 @@
-from .evaluator import Evaluator
+from .evaluator import Evaluator, Terminal
 from .gamestate import GameState

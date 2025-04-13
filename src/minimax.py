@@ -3,7 +3,7 @@ import threading
 
 from typing import TypeVar, Callable, Optional
 
-from .abstracts import Evaluator
+from .abstracts import Evaluator, Terminal
 from .abstracts.gamestate import GameState, TMove
 
 
@@ -17,6 +17,8 @@ def minimax(state: T, evaluator: Evaluator[T], timeout: float) -> TMove:
 
     def fac(max_depth: int) -> MoveFinder:
         return dfs_factory(state, evaluator, max_depth)
+
+    return search_with_timeout(fac(9), 50)
 
     return iterative_deepening_search(fac, timeout)
 
@@ -69,6 +71,7 @@ def dfs_factory(state: T, evaluator: Evaluator[T],
                 max_depth: int) -> MoveFinder:
 
     best_move: Optional[TMove] = None
+    all_terminals_searched = True  # set to false at first max_depth reached
 
     def dfs(cur: T,
             kill_flag: threading.Event,
@@ -81,10 +84,12 @@ def dfs_factory(state: T, evaluator: Evaluator[T],
 
         cur_score = evaluator.evaluate(cur)
 
-        if (
-            depth == max_depth or
-            cur_score in (float("inf"), float("-inf"))  # someone won
-        ):
+        if isinstance(cur_score, Terminal):
+            return cur_score.value
+
+        if depth == max_depth:
+            nonlocal all_terminals_searched
+            all_terminals_searched = False
             return cur_score
 
         best = None
@@ -93,11 +98,11 @@ def dfs_factory(state: T, evaluator: Evaluator[T],
             score = dfs(nxt, kill_flag, depth + 1, alpha, beta)
 
             if score is None:
-                return None
+                continue
 
             if best is None or (
-                (nxt.maxxer_turn() and score > best) or
-                (nxt.minner_turn() and score < best)
+                (cur.maxxer_turn() and score > best) or
+                (cur.minner_turn() and score < best)
             ):
 
                 if prune(cur, score, alpha, beta):
@@ -113,6 +118,8 @@ def dfs_factory(state: T, evaluator: Evaluator[T],
                 if depth == 0:
                     nonlocal best_move
                     best_move = move
+
+        return best
 
     def wrapper(kill_flag: threading.Event, output_move: SharedMoveRef) -> None:
         dfs(state, kill_flag)

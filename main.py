@@ -1,15 +1,15 @@
 import sys
 
+from src.abstracts import Terminal
 from src.tictactoe import TicEvaluator, TicState, Player
 from src.minimax import minimax
 
 
-PRINT_TBL = {Player.CIRCLE: "O", Player.CROSS: "X", None: " "}
 PLAYING_AS = Player.CIRCLE
 
 def main(args: list[str]) -> None:
 
-    timeout = 2
+    timeout = 0.2
 
     if len(args) >= 1:
         try:
@@ -17,19 +17,16 @@ def main(args: list[str]) -> None:
         except ValueError:
             print("invalid timeout")
 
-    board = [[None] * 3 for i in range(3)]
+    board = [[None] * 3 for _ in range(3)]
 
     state = TicState(PLAYING_AS, board)
 
-    while TicEvaluator.evaluate(state) not in (float("inf"), float("-inf")):
+
+    while isinstance(TicEvaluator.evaluate(state), Terminal):
 
         if state.to_play == PLAYING_AS:
 
-            # print board
-            for i, row in enumerate(state.grid):
-                print("|".join(PRINT_TBL[v] for v in row))
-                if i < 2:
-                    print("-----")
+            print(state)
 
             print("Play a move: x y, where bottom left is (1, 1)")
 
@@ -74,7 +71,13 @@ def main(args: list[str]) -> None:
                 return
             state.make_move(move)
 
-    if TicEvaluator.evaluate(state) == float("inf"):
+    print(state)
+
+    evl = TicEvaluator.evaluate(state)
+
+    if evl == Terminal.DRAW:
+        print("u both suck! Draw!")
+    elif evl == Terminal.MAXXER_WIN:
         if PLAYING_AS.maxxer():
             print("You won!")
         else:

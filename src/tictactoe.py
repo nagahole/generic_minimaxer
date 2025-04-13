@@ -6,7 +6,8 @@ import copy
 from enum import Enum
 from typing import Iterable, Tuple, Self
 
-from .abstracts import Evaluator, GameState
+from .abstracts import Evaluator, GameState, Terminal
+
 
 class Player(Enum):
     CIRCLE = 0
@@ -20,6 +21,9 @@ class Player(Enum):
             return Player.CROSS
         else:
             return Player.CIRCLE
+
+
+PRINT_TBL = {Player.CIRCLE: "O", Player.CROSS: "X", None: " "}
 
 # TODO would be cool to have a (non-essential) but helper generic grid class,
 # since so many different games are played on grids
@@ -47,8 +51,8 @@ class TicState(GameState):
             for col in range(3):
                 if self.grid[row][col] is None:
 
-                    nxt = TicState(self.to_play.opposite(), self.grid)
-                    nxt.set_square(row, col, self.to_play)
+                    nxt = TicState(self.to_play, self.grid)
+                    nxt.make_move((row, col))
 
                     yield ((row, col), nxt)
 
@@ -64,9 +68,20 @@ class TicState(GameState):
     def set_square(self, row: int, col: int, val: Player | None) -> None:
         self.grid[row][col] = val
 
+    def __str__(self) -> str:
+
+        res = ""
+
+        for i, row in enumerate(self.grid):
+            res += "|".join(PRINT_TBL[v] for v in row) + "\n"
+            if i < 2:
+                res += "-----\n"
+
+        return res
+
 
 class TicEvaluator(Evaluator[TicState]):
-    def evaluate(state: TicState):
+    def evaluate(state: TicState) -> float:
 
         for player in (Player.CIRCLE, Player.CROSS):
 
@@ -85,8 +100,12 @@ class TicEvaluator(Evaluator[TicState]):
                 )
             ):
                 if player.maxxer():
-                    return float("inf")
+                    return Terminal.MAXXER_WIN
                 else:
-                    return float("-inf")
+                    return Terminal.MINNER_WIN
 
-        return 0  # TODO fix heuristic later
+        if all(state.get_square(i, j) is not None
+               for i in range(3) for j in range(3)):
+            return Terminal.DRAW
+
+        return 0
