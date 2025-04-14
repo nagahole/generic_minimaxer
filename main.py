@@ -5,11 +5,12 @@ from src.tictactoe import TicEvaluator, TicState, Player
 from src.minimax import minimax
 
 
-PLAYING_AS = Player.CIRCLE
+PLAYING_AS = Player.CROSS
+PLAY_FIRST = False
 
 def main(args: list[str]) -> None:
 
-    timeout = 0.2
+    timeout = 3
 
     if len(args) >= 1:
         try:
@@ -17,12 +18,13 @@ def main(args: list[str]) -> None:
         except ValueError:
             print("invalid timeout")
 
+    starter = PLAYING_AS if PLAY_FIRST else PLAYING_AS.opposite()
     board = [[None] * 3 for _ in range(3)]
 
-    state = TicState(PLAYING_AS, board)
+    state = TicState(starter, board)
 
 
-    while isinstance(TicEvaluator.evaluate(state), Terminal):
+    while not isinstance(TicEvaluator.evaluate(state), Terminal):
 
         if state.to_play == PLAYING_AS:
 
